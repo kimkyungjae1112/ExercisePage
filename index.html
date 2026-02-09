@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>DevDaily Quiz - 언리얼 클라이언트 공부</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #0f172a;
+      --bg-card: #020617;
+      --accent: #38bdf8;
+      --accent-soft: rgba(56, 189, 248, 0.15);
+      --text: #e5e7eb;
+      --text-muted: #9ca3af;
+      --danger: #f97373;
+      --success: #4ade80;
+      --border: #1f2933;
+      --radius: 12px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #1e293b 0, #020617 55%, #020617 100%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .app {
+      max-width: 960px;
+      width: 100%;
+      background: radial-gradient(circle at top left, #0b1220 0, #020617 60%);
+      border-radius: 24px;
+      border: 1px solid rgba(148, 163, 184, 0.15);
+      box-shadow:
+        0 25px 50px -12px rgba(15, 23, 42, 0.9),
+        0 0 0 1px rgba(15, 23, 42, 0.9);
+      padding: 24px 24px 28px;
+    }
+
+    @media (min-width: 768px) {
+      .app {
+        padding: 28px 32px 32px;
+      }
+    }
+
+    .header {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 24px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .title-badge {
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      background: rgba(15, 23, 42, 0.7);
+      color: var(--accent);
+    }
+
+    .subtitle {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .left-controls,
+    .right-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .select,
+    .input-number {
+      background: rgba(15, 23, 42, 0.9);
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      color: var(--text);
+      padding: 6px 12px;
+      font-size: 0.85rem;
+      outline: none;
+    }
+
+    .select:focus,
+    .input-number:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.4);
+    }
+
+    .btn {
+      border: none;
+      border-radius: 999px;
+      padding: 7px 16px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: linear-gradient(135deg, #0ea5e9, #22c55e);
+      color: white;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      box-shadow:
+        0 10px 20px rgba(34, 197, 94, 0.35),
+        0 0 0 1px rgba(15, 23, 42, 0.9);
+    }
+
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: default;
+      box-shadow: none;
+    }
+
+    .btn-secondary {
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--text-muted);
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      box-shadow: none;
+    }
+
+    .chip {
+      font-size: 0.75rem;
+      padding: 3px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      background: rgba(15, 23, 42, 0.85);
+      color: var(--text-muted);
+    }
+
+    .status {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .status-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .status-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(30, 64, 175, 0.6);
+    }
+
+    .status-item strong {
+      color: var(--accent);
+    }
+
+    .status-score strong {
+      color: var(--success);
+    }
+
+    .card {
+      background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.1) 0, #020617 55%);
+      border-radius: var(--radius);
+      border: 1px solid rgba(30, 64, 175, 0.85);
+      padding: 16px 16px 18px;
+    }
+
+    .question-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .question-topic {
+      font-size: 0.75rem;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      color: var(--text-muted);
+    }
+
+    .question-level {
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(234, 179, 8, 0.5);
+      color: #facc15;
+      background: rgba(15, 23, 42, 0.8);
+    }
+
+    .question-text {
+      font-size: 0.95rem;
+      line-height: 1.5;
+      margin-bottom: 14px;
+    }
+
+    .choices {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .choice {
+      border-radius: 999px;
+      padding: 8px 10px;
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      cursor: pointer;
+      text-align: left;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.15s ease, border-color 0.15s ease, transform 0.05s ease;
+    }
+
+    .choice:hover {
+      border-color: var(--accent);
+      background: rgba(15, 23, 42, 1);
+      transform: translateY(-1px);
+    }
+
+    .choice.selected {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .choice.correct {
+      border-color: var(--success);
+      background: rgba(22, 163, 74, 0.12);
+    }
+
+    .choice.incorrect {
+      border-color: var(--danger);
+      background: rgba(248, 113, 113, 0.12);
+    }
+
+    .choice-label {
+      font-size: 0.75rem;
+      width: 18px;
+      height: 18px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    .choice-text {
+      flex: 1;
+    }
+
+    .feedback {
+      font-size: 0.85rem;
+      margin-bottom: 6px;
+      min-height: 1.2em;
+    }
+
+    .feedback.correct {
+      color: var(--success);
+    }
+
+    .feedback.incorrect {
+      color: var(--danger);
+    }
+
+    .explanation {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px dashed rgba(148, 163, 184, 0.6);
+      margin-bottom: 10px;
+    }
+
+    .card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .progress {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .progress strong {
+      color: var(--accent);
+    }
+
+    .empty-state {
+      text-align: left;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      padding: 8px 0;
+    }
+
+    .tagline {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 10px;
+      text-align: right;
+    }
+
+    .tagline span {
+      color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="header">
+      <div>
+        <div class="title">
+          DevDaily Quiz
+          <span class="title-badge">언리얼 클라이언트 3개월차 전용</span>
+        </div>
+        <p class="subtitle">
+          하루 <strong>10~15분</strong>, CS / C++ / 언리얼 개념 체크용 미니 퀴즈.
+        </p>
+      </div>
+    </header>
+
+    <section class="controls">
+      <div class="left-controls">
+        <select id="topicSelect" class="select">
+          <option value="all">전체 주제</option>
+          <option value="자료구조">자료구조</option>
+          <option value="컴퓨터구조">컴퓨터구조</option>
+          <option value="운영체제">운영체제</option>
+          <option value="네트워크">네트워크</option>
+          <option value="그래픽스">그래픽스</option>
+          <option value="C++">C++</option>
+          <option value="디자인 패턴">디자인 패턴</option>
+          <option value="언리얼 상식">언리얼 상식</option>
+          <option value="언리얼 구조">언리얼 구조</option>
+          <option value="언리얼 개발">언리얼 개발</option>
+        </select>
+
+        <div>
+          <input
+            id="questionCount"
+            class="input-number"
+            type="number"
+            min="3"
+            max="15"
+            value="5"
+          />
+        </div>
+      </div>
+
+      <div class="right-controls">
+        <span class="chip">목표: 매일 1세트만이라도!</span>
+        <button id="startBtn" class="btn">
+          오늘의 문제 시작
+        </button>
+      </div>
+    </section>
+
+    <section class="status">
+      <div class="status-group">
+        <div class="status-item">
+          세트 난이도:
+          <strong id="statusDifficulty">혼합</strong>
+        </div>
+        <div class="status-item status-score">
+          점수:
+          <strong id="statusScore">0 / 0</strong>
+        </div>
+      </div>
+      <div class="status-group">
+        <div class="status-item">
+          남은 문제:
+          <strong id="statusRemaining">0</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div id="questionContainer">
+        <p class="empty-state">
+          상단에서 <strong>주제</strong>와 <strong>문제 개수</strong>를 고르고
+          <strong>“오늘의 문제 시작”</strong>을 눌러봐.
+          <br />
+          처음에는 주제 섞어서, 익숙해지면 한 주제씩 집중도 가능!
+        </p>
+      </div>
+    </section>
+
+    <p class="tagline">
+      made for <span>Unreal Client Dev</span>
+    </p>
+  </main>
+
+  <script>
+    // === 설정: AI 사용 여부 ===
+    // Render에 백엔드(API 서버)가 배포되어 있으므로 기본값을 true로 설정합니다.
+    const USE_AI = true;
+
+    // === 1. 예시 문제 데이터 (로컬) ===
+    // 백엔드/AI가 없을 때도 바로 풀 수 있도록 기본 문제들을 넣어두었습니다.
+    const ALL_QUESTIONS = [
+      {
+        id: 1,
+        topic: "자료구조",
+        level: "easy",
+        question: "일반적으로 '스택(Stack)' 자료구조의 특징으로 알맞은 것은?",
+        choices: [
+          "FIFO, 먼저 들어온 데이터가 먼저 나간다",
+          "LIFO, 나중에 들어온 데이터가 먼저 나간다",
+          "임의 인덱스로 O(1)에 접근할 수 있다",
+          "항상 정렬된 상태를 유지한다",
+        ],
+        answerIndex: 1,
+        explanation:
+          "스택(Stack)은 LIFO(Last In First Out) 구조로, 함수 호출 스택과 같이 나중에 쌓인 것이 먼저 빠져나오는 구조야.",
+      },
+      {
+        id: 2,
+        topic: "운영체제",
+        level: "easy",
+        question:
+          "다음 중 '문맥 교환(Context Switch)'에 대한 설명으로 가장 알맞은 것은?",
+        choices: [
+          "프로세스의 메모리 사용량을 줄이기 위해 힙을 정리하는 과정",
+          "CPU가 다른 프로세스로 실행을 넘기기 위해 레지스터 등의 상태를 저장/복원하는 과정",
+          "디스크에서 파일을 읽어 오는 과정",
+          "프로세스가 생성되는 순간 실행되는 최초의 함수 호출",
+        ],
+        answerIndex: 1,
+        explanation:
+          "문맥 교환은 현재 실행 중인 프로세스/스레드의 상태(레지스터, 프로그램 카운터 등)를 저장하고, 다른 프로세스/스레드의 상태를 복원하는 과정이야.",
+      },
+      {
+        id: 3,
+        topic: "네트워크",
+        level: "easy",
+        question:
+          "신뢰성 있는 연결 지향형 전송을 제공하고, 3-way handshake를 사용하는 프로토콜은?",
+        choices: ["UDP", "TCP", "IP", "HTTP"],
+        answerIndex: 1,
+        explanation:
+          "TCP(Transmission Control Protocol)는 연결 지향형이며, 3-way handshake를 통해 연결을 설정하고, 신뢰성 있는 전송을 제공해.",
+      },
+      {
+        id: 4,
+        topic: "C++",
+        level: "easy",
+        question:
+          "C++에서 'RAII(Resource Acquisition Is Initialization)'가 의미하는 바와 가장 가까운 것은?",
+        choices: [
+          "리소스는 반드시 전역 변수로 관리해야 한다",
+          "리소스는 스마트 포인터로만 관리해야 한다",
+          "리소스 획득과 해제를 객체의 생성자/소멸자에 묶어서, 스코프 기반으로 자동 관리한다",
+          "GC(가비지 컬렉션)를 통해 리소스를 해제한다",
+        ],
+        answerIndex: 2,
+        explanation:
+          "RAII는 객체의 수명(생성자/소멸자)에 리소스 획득/해제를 묶어서 스코프 기반으로 자동 관리하는 C++ 스타일의 리소스 관리 철학이야.",
+      },
+      {
+        id: 5,
+        topic: "디자인 패턴",
+        level: "easy",
+        question:
+          "언리얼에서 'Singleton' 패턴과 가장 비슷한 역할을 하는 것으로 볼 수 있는 것은?",
+        choices: [
+          "레벨에 배치된 모든 Actor",
+          "Garbage Collector",
+          "GameInstance 처럼 게임 전역에서 하나만 존재하는 매니저 객체",
+          "각각의 UPROPERTY",
+        ],
+        answerIndex: 2,
+        explanation:
+          "언리얼의 UGameInstance 등은 게임 전체에서 하나만 존재하고 전역 상태를 관리한다는 점에서 싱글톤과 비슷한 역할을 해.",
+      },
+      {
+        id: 6,
+        topic: "언리얼 상식",
+        level: "easy",
+        question:
+          "언리얼에서 'Tick' 함수가 호출되는 타이밍으로 가장 옳은 것은?",
+        choices: [
+          "Garbage Collection이 한 번 돌 때마다",
+          "프레임마다, 월드의 DeltaTime을 기준으로",
+          "레벨이 로드될 때 한 번만",
+          "Actor가 Destroy 될 때마다",
+        ],
+        answerIndex: 1,
+        explanation:
+          "Tick은 보통 프레임마다 호출되고, DeltaTime을 인자로 받아 프레임 기반이 아니라 시간 기반으로 로직을 짤 수 있게 해 줘.",
+      },
+      {
+        id: 7,
+        topic: "언리얼 구조",
+        level: "medium",
+        question:
+          "언리얼에서 'Actor'와 'UObject'의 관계에 대해 가장 알맞은 설명은?",
+        choices: [
+          "UObject는 Actor의 자식 클래스이다",
+          "Actor는 UObject를 상속받는, 월드에 배치 가능한 클래스이다",
+          "둘은 전혀 관계가 없다",
+          "UObject는 항상 월드에 존재해야만 한다",
+        ],
+        answerIndex: 1,
+        explanation:
+          "Actor는 UObject를 상속하는 특수한 타입으로, 월드에 배치되며 위치/회전/스케일(Transform)을 가진다는 특징이 있어.",
+      },
+      {
+        id: 8,
+        topic: "그래픽스",
+        level: "easy",
+        question:
+          "3D 그래픽스에서 'Depth Buffer(Z-Buffer)'의 주된 역할은 무엇인가?",
+        choices: [
+          "텍스처의 해상도를 높인다",
+          "멀리 있는 오브젝트를 자동으로 안 보이게 한다(Culling)",
+          "픽셀마다 가장 앞에 있는(카메라에 더 가까운) 픽셀만 보이도록 깊이를 비교한다",
+          "조명 계산을 단순화한다",
+        ],
+        answerIndex: 2,
+        explanation:
+          "Depth Buffer는 픽셀마다 깊이 정보를 저장해, 더 가까운 픽셀만 보이도록 해 주는 버퍼야. 언리얼의 Z-fighting 문제도 이 깊이 정밀도와 관련 있어.",
+      },
+    ];
+
+    // === 2. 상태 관리 ===
+    let currentSet = [];
+    let currentIndex = 0;
+    let correctCount = 0;
+    let answeredCurrent = false;
+
+    const topicSelect = document.getElementById("topicSelect");
+    const questionCountInput = document.getElementById("questionCount");
+    const startBtn = document.getElementById("startBtn");
+    const questionContainer = document.getElementById("questionContainer");
+
+    const statusDifficulty = document.getElementById("statusDifficulty");
+    const statusScore = document.getElementById("statusScore");
+    const statusRemaining = document.getElementById("statusRemaining");
+
+    function shuffle(array) {
+      const result = array.slice();
+      for (let i = result.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [result[i], result[j]] = [result[j], result[i]];
+      }
+      return result;
+    }
+
+    function pickQuestions(topic, count) {
+      let pool =
+        topic === "all"
+          ? ALL_QUESTIONS
+          : ALL_QUESTIONS.filter((q) => q.topic === topic);
+
+      if (pool.length === 0) {
+        return [];
+      }
+
+      const shuffled = shuffle(pool);
+      return shuffled.slice(0, Math.min(count, shuffled.length));
+    }
+
+    function getDifficultyLabel(questions) {
+      if (!questions.length) return "없음";
+      const hasMedium = questions.some((q) => q.level === "medium");
+      const hasHard = questions.some((q) => q.level === "hard");
+      if (hasHard) return "상급 포함";
+      if (hasMedium) return "중급 포함";
+      return "기초";
+    }
+
+    // === 3. AI 백엔드 호출 ===
+    async function fetchAIQuestions(topic, count) {
+      // Render에 배포된 백엔드 엔드포인트
+      const endpoint = "https://exercisepage-backend.onrender.com/generate-quiz";
+
+      const body = {
+        topic: topic === "all" ? null : topic,
+        count,
+        level: "mixed",
+      };
+
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) {
+        throw new Error("퀴즈 생성 API 호출 실패");
+      }
+
+      const data = await res.json();
+      return data;
+    }
+
+    // === 4. 세션 시작 ===
+    async function startSession() {
+      const topic = topicSelect.value;
+      const count = Math.max(
+        3,
+        Math.min(15, parseInt(questionCountInput.value, 10) || 5)
+      );
+
+      startBtn.disabled = true;
+      startBtn.textContent = "문제 준비 중...";
+
+      let picked = [];
+
+      try {
+        if (USE_AI) {
+          picked = await fetchAIQuestions(topic, count);
+        } else {
+          picked = pickQuestions(topic, count);
+        }
+      } catch (e) {
+        console.error(e);
+        alert("AI로 문제를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.");
+        picked = pickQuestions(topic, count);
+      } finally {
+        startBtn.disabled = false;
+        startBtn.textContent = "오늘의 문제 시작";
+      }
+
+      if (!picked.length) {
+        alert("해당 주제의 문제가 아직 없어요. 다른 주제를 골라줘!");
+        return;
+      }
+
+      currentSet = picked;
+      currentIndex = 0;
+      correctCount = 0;
+      answeredCurrent = false;
+
+      statusDifficulty.textContent = getDifficultyLabel(currentSet);
+      statusScore.textContent = `0 / ${currentSet.length}`;
+      statusRemaining.textContent = currentSet.length.toString();
+
+      renderQuestion();
+    }
+
+    function renderQuestion() {
+      const q = currentSet[currentIndex];
+      if (!q) {
+        renderResult();
+        return;
+      }
+
+      const total = currentSet.length;
+      const currentNumber = currentIndex + 1;
+
+      const letters = ["A", "B", "C", "D", "E"];
+
+      questionContainer.innerHTML = `
+        <div class="question-header">
+          <div class="question-topic"># ${q.topic}</div>
+          <div class="question-level">${q.level}</div>
+        </div>
+        <div class="question-text">
+          Q${currentNumber}. ${q.question}
+        </div>
+        <div class="choices">
+          ${q.choices
+            .map(
+              (choice, idx) => `
+            <button
+              class="choice"
+              data-index="${idx}"
+              type="button"
+            >
+              <span class="choice-label">${letters[idx] ?? " "}</span>
+              <span class="choice-text">${choice}</span>
+            </button>
+          `
+            )
+            .join("")}
+        </div>
+        <div id="feedback" class="feedback"></div>
+        <div id="explanation" class="explanation" style="display:none;"></div>
+        <div class="card-footer">
+          <div class="progress">
+            문제 <strong>${currentNumber}</strong> / ${total}
+          </div>
+          <div>
+            <button id="nextBtn" class="btn btn-secondary" type="button">
+              다음 문제
+            </button>
+          </div>
+        </div>
+      `;
+
+      const choiceButtons = questionContainer.querySelectorAll(".choice");
+      const feedbackEl = document.getElementById("feedback");
+      const explanationEl = document.getElementById("explanation");
+      const nextBtn = document.getElementById("nextBtn");
+
+      answeredCurrent = false;
+
+      choiceButtons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          if (answeredCurrent) return;
+          const idx = parseInt(btn.dataset.index, 10);
+          handleAnswer(idx, q, choiceButtons, feedbackEl, explanationEl);
+        });
+      });
+
+      nextBtn.addEventListener("click", () => {
+        if (currentIndex < currentSet.length - 1) {
+          currentIndex += 1;
+          answeredCurrent = false;
+          renderQuestion();
+        } else {
+          renderResult();
+        }
+      });
+
+      statusRemaining.textContent = (currentSet.length - currentIndex).toString();
+    }
+
+    function handleAnswer(selectedIdx, q, choiceButtons, feedbackEl, explanationEl) {
+      answeredCurrent = true;
+
+      choiceButtons.forEach((btn, idx) => {
+        btn.classList.remove("selected", "correct", "incorrect");
+        if (idx === selectedIdx) {
+          btn.classList.add(
+            idx === q.answerIndex ? "correct" : "incorrect"
+          );
+        }
+        if (idx === q.answerIndex) {
+          btn.classList.add("correct");
+        }
+      });
+
+      const isCorrect = selectedIdx === q.answerIndex;
+      if (isCorrect) {
+        correctCount += 1;
+        feedbackEl.textContent = "정답!";
+        feedbackEl.className = "feedback correct";
+      } else {
+        feedbackEl.textContent = "아쉽다! 다시 개념 정리해보자.";
+        feedbackEl.className = "feedback incorrect";
+      }
+
+      explanationEl.style.display = "block";
+      explanationEl.textContent = q.explanation;
+
+      statusScore.textContent = `${correctCount} / ${currentSet.length}`;
+    }
+
+    function renderResult() {
+      const total = currentSet.length;
+      const score = correctCount;
+      const accuracy = total > 0 ? Math.round((score / total) * 100) : 0;
+
+      let message = "";
+      if (accuracy === 100) {
+        message = "완벽하다! 오늘 공부 끝내고 언리얼 켜도 되겠다.";
+      } else if (accuracy >= 70) {
+        message = "좋아! 헷갈린 문제들만 내일 한 번 더 보자.";
+      } else {
+        message = "오늘은 복습 위주로. 내일 다시 한 세트만 더!";
+      }
+
+      questionContainer.innerHTML = `
+        <div class="question-text">
+          오늘 세트 완료!
+        </div>
+        <div class="explanation">
+          총 <strong>${total}</strong>문제 중 <strong>${score}</strong>문제 정답
+          (정답률 <strong>${accuracy}%</strong>)
+          <br /><br />
+          ${message}
+        </div>
+        <div class="card-footer">
+          <div class="progress">
+            내일도 같은 시간에 한 세트만 더 하면,
+            1년 뒤에는 엄청난 차이가 날 거야.
+          </div>
+          <div>
+            <button id="restartBtn" class="btn btn-secondary" type="button">
+              같은 조건으로 다시 풀기
+            </button>
+          </div>
+        </div>
+      `;
+
+      const restartBtn = document.getElementById("restartBtn");
+      restartBtn.addEventListener("click", () => {
+        currentIndex = 0;
+        correctCount = 0;
+        answeredCurrent = false;
+        statusScore.textContent = `0 / ${currentSet.length}`;
+        statusRemaining.textContent = currentSet.length.toString();
+        renderQuestion();
+      });
+
+      statusRemaining.textContent = "0";
+    }
+
+    startBtn.addEventListener("click", () => {
+      startSession();
+    });
+  </script>
+</body>
+</html>
+
